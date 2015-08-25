@@ -1,0 +1,123 @@
+#labels Phase-Implementation,Done
+= Introduction =
+La structure *ZIAModule* permet de définir des pointeurs sur fonctions pour les différentes actions qu'il devra effectuer.<br>
+Par exemple:
+{{{
+Load du module = "loadModule()";
+Reception d'une commande = "onReceiveCommand()";
+}}}
+= Préliminaires =
+Pour simplifier la syntaxe et pour des raisons de lisibilité<br>
+nous avons définis des *constantes*:
+{{{
+#define ZIA_FCT_PTR(N)	int (*N)(int status, ZIAApi::Transaction &, void *)
+#define ZIA_FCT(N)	int N(int status, ZIAApi::Transaction &transaction, void *param)
+}}}
+ * *ZIA_FCT_PTR* est utilisé pour définir les pointeurs sur fonctions dans la structure *ZIAModule*.
+{{{
+struct ZIAModule
+{
+	ZIA_FCT_PTR(loadModule);
+...
+}
+}}}
+ * *ZIA_FCT* est utilisé pour créer la fonction "associée" à la structure *ZIAModule*.
+{{{
+ZIA_FCT(myModuleFunction)
+{
+	// code
+}
+}}}
+
+*Important:* nul besoin de définir tous les pointeurs à une fonction.
+
+= Nos fonctions =
+== Initialisation (_loadModule_) ==
+{{{
+struct ZIAModule
+{
+	ZIA_FCT_PTR(loadModule);
+	...
+}
+}}}
+Cette fonction sera la première appelée, à l'utilisation du module.<br>
+Elle sera la première à retourner un code *status*.
+
+== Réception d'une commande (_onReceiveCommand_) ==
+{{{
+struct ZIAModule
+{
+	...
+	ZIA_FCT_PTR(onReceiveCommand);
+	...
+}
+}}}
+Elle sera appelée à la réception d'une commande (demande), afin de l'analyser par exemple et de savoir ce que le client demande.
+
+== Réception & traitement du Header (_onReceiveHead_) ==
+{{{
+struct ZIAModule
+{
+	...
+	ZIA_FCT_PTR(onReceiveHead);
+	...
+}
+}}}
+Appelée pour récupérer et traiter le header HTTP.<br>
+
+== Réception & traitement du Body (_onReceiveBody_) ==
+{{{
+struct ZIAModule
+{
+	...
+	ZIA_FCT_PTR(onReceiveBody);
+	...
+}
+}}}
+Idem que pour le header mais cette fois avec le _corps_ du paquet HTTP.
+
+== Demande d'un body (_makeResponseBody_) ==
+{{{
+struct ZIAModule
+{
+	...
+	ZIA_FCT_PTR(makeResponseBody);
+	...
+}
+}}}
+Appeler cette fonction afin de créer un *body* pour votre réponse HTTP.
+
+== Demande d'un header (_makeResponseHead_) ==
+{{{
+struct ZIAModule
+{
+	...
+	ZIA_FCT_PTR(makeResponseHead);
+	...
+}
+}}}
+Idem que pour le body, ici appelée pour faire un *header* pour une réponse HTTP.
+
+== Evenements liés à la réponse (_beforeSendResponse_;_afterSendResponse_) ==
+{{{
+struct	ZIAModule
+{
+	...
+	ZIA_FCT_PTR(beforeSendResponse);
+	ZIA_FCT_PTR(afterSendResponse);
+	...
+}
+}}}
+Parfois il peut être utile d'effectuer certaines actions avant d'envoyer la réponse HTTP. Ces deux fonctions seront donc appelées si besoin.
+
+== Quitter son module (_unloadModule_) ==
+
+{{{
+struct	ZIAModule
+{
+	...
+	ZIA_FCT_PTR(unloadModule);
+	...
+}
+}}}
+Appelée pour arrêter proprement le module.

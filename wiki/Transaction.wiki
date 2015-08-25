@@ -1,0 +1,51 @@
+#labels Featured,Phase-Requirements,Done
+= Utilisation de la classe =
+
+La classe Transaction permet les échanges entre le module et le serveur.
+Elle contient les informations concernant:
+  * La ligne de commande du client
+  * La requête du client
+  * La requête qui transmise au client
+
+La classe est définie dans le fichier [http://code.google.com/p/zia-epitech-2013-gavory-f/source/browse/trunk/Transaction.h Transaction.h]
+
+== Références ==
+  * [ZIAModule]
+
+== Dépendances ==
+  * [HTTPCommand]
+  * [HTTPPacket]
+
+= Contenu =
+
+== Constructor & Destructor ==
+{{{
+	Transaction(HTTPCommand command, const HTTPPacket request) : command(command), request(request){};
+	Transaction(const HTTPPacket request) : request(request){};
+	~Transaction(void);
+}}}
+
+== Attributs publics ==
+
+{{{
+	HTTPCommand			command;
+	const HTTPPacket		request;
+	HTTPPacket			response;
+}}}
+
+La commande _command_ sera remplie par le serveur dès la réception d'une commande par le serveur.
+Le paquet _request_ sera rempli par le serveur dès la réception des headers et du body de la requête client. Il ne pourra être modifié par les modules.
+Le paquet _response_ sera rempli par le serveur lors de l'accès à la ressource demandée par le client.
+
+= Exemples d'utilisation =
+== Modification de la response ==
+Ici nous afficherons comme _body_ le contenu du header _Content-Type_ de la requête client si il existe, sinon nous afficherons "Hello World".
+
+{{{
+
+if (request.head.hasHeader("Content-Type"))
+	response.body = request.head.getHeader("Content-Type");
+else
+	response.body = "Hello World";
+
+}}}

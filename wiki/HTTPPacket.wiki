@@ -1,0 +1,96 @@
+#labels Featured,Done,Phase-Requirements
+= Utilisation de la classe =
+
+La classe HTTPCommand permet de sérialiser le contenu d'un paquet HTTP.
+Elle est composée d'un header et d'un body.
+Cette classe permet la [Serialisation sérialisation de paquets HTTP].
+
+La classe est définie dans le fichier [http://code.google.com/p/zia-epitech-2013-gavory-f/source/browse/trunk/HTTPPacket.h HTTPPacket.h]
+
+== Références ==
+  * [Transaction]
+
+== Dépendances ==
+  * [HTTPHead]
+
+= Contenu =
+
+== Constructor & Destructor ==
+{{{
+	HTTPPacket(void);
+	HTTPPacket(std::string packet);
+	~HTTPPacket(void);
+}}}
+
+Le constructeur prenant un string appellera la méthode unserialize(std::string packet).
+
+== Sérialisation ==
+{{{
+	void	unserialize(std::string packet);
+	const std::string	serialize(void);
+}}}
+
+La méthode unserialize va prendre un paquet HTTP (composé d'un header et d'un body) et va remplir l'objet. Elle fera appel à la méthode unserialize de [HTTPHead].
+
+La méthode serialize prendra les attributs de l'objet et en ressortira une chaine formatée pour servir de paquet HTTP.
+
+Pour plus d'information lire la page sur la [serialisation sérialisation de paquets HTTP].
+
+== Attributs publics ==
+
+{{{
+	std::string body;
+	HTTPHead	head;
+}}}
+
+== Définitions ==
+{{{
+#define ZIAPI_CRLF	"\r\n"
+}}}
+
+= Exemples d'utilisation =
+
+== Serialisation d'un paquet HTTP ==
+Affichage du Content-Type d'une requete, et de son body.
+{{{
+	std::string query = "From: frog@jmarshall.com" + std::string(ZIAPI_CRLF) + 
+			"User-Agent: HTTPTool/1.0" + ZIAPI_CRLF + 
+			"Content-Type: application/x-www-form-urlencoded" + ZIAPI_CRLF +
+			"Content-Length: 32" + ZIAPI_CRLF + ZIAPI_CRLF +
+			"home=Cosby&favorite+flavor=flies";
+// Soit
+	ZIAApi::HTTPPacket packet(query);
+// Soit
+	ZIAApi::HTTPPacket packet();
+	packet.unserialize(query);
+
+	if (packet.head.hasHeader("Content-Type"))
+		cout << packet.head.getHeader("Content-Type") << endl;
+	cout << packet.body << endl;
+}}}
+
+Ce code nous affichera ceci sur la sortie standard :
+{{{
+application/x-www-form-urlencoded
+home=Cosby&favorite+flavor=flies
+}}}
+
+== Edition et désérialisation d'un paquet HTTP ==
+On prend en compte le HTTPPacket packet comme étant celui de l'exemple précédent.
+{{{
+	packet.head.setHeader("Content-Encoding", "x-gzip");
+	packet.head.setHeader("User-Agent", packet.head.getHeader("User-Agent") + "/ZIA");
+	packet.body = "nouveau content";
+	cout << packet.serialize() << endl;
+}}}
+
+Ce code affichera sur la sortie standard :
+{{{
+Content-Encoding:x-gzip
+Content-Length: 32
+Content-Type: application/x-www-form-urlencoded
+From: frog@jmarshall.com
+User-Agent: HTTPTool/1.0/ZIA
+
+nouveau content
+}}}

@@ -1,0 +1,79 @@
+#labels Featured,Phase-Requirements,Done
+= Utilisation de la classe =
+La classe HTTPHead permet de récuperer les différentes en-têtes HTTP ou d'en créer.
+
+La classe est définie dans le fichier [http://code.google.com/p/zia-epitech-2013-gavory-f/source/browse/trunk/HTTPHead.h HTTPHead.h]
+
+== Références ==
+  * [HTTPPacket]
+
+= Contenu =
+== Constructor & Deconstructor ==
+{{{
+HTTPHead	(void);
+~HTTPHead	(void);
+}}}
+
+== Setters ==
+{{{
+void	setHeader	(const std::string header, const std::string value);
+}}}
+
+== Getters ==
+{{{
+std::string	getHeader	(const std::string header);
+}}}
+
+== Serialization & Deserialization ==
+Cette méthode retourne les différentes en-têtes contenu dans
+la `std::map<std::string, std::string> _headers` en une `std::string`.
+Cette `std::string` est prete à être envoyée dans une requête HTTP. 
+{{{
+std::string	serialize	(void);
+}}}
+
+Cette méthode récupère l'en-tête HTTP de la requete pour sauvegarder
+dans une `std::map<std::string, std::string> _headers` les différents attributs.
+{{{
+void		unserialize	(const std::string);
+}}}
+
+== Other ==
+Cette méthode permet de savoir si l'en-tête donnée en paramètre est
+inclus dans la `std::map<std::string, std::string> _headers`
+de l'objet.
+{{{
+bool	hasHeader	(const std::string header);
+}}}
+
+= Exemple d'utilisation =
+== Manipulation d'en-tête HTTP ==
+{{{
+std::string	str_header;
+HTTPHeader	obj_header;
+
+header =	"Accept : text/html, image/*\n";
+header +=	"Accept-Charset : iso8859-5\n";
+header +=	"Accept-Encoding : gzip, compress\n";
+
+obj_header.unserialize(str_header);
+
+std::cout << obj_header.hasHeader("Accept") << std::endl;
+std::cout << obj_header.hasHeader("Doudida") << std::endl;
+
+std::cout << obj_header.getHeader("Accept-Charset") << std::endl;
+
+obj_header.setHeader("Accept-Encoding", "Doudida");
+std::cout << obj_header.serialize() << std::endl;
+}}}
+Ce code affiche:
+{{{
+"true"
+"false"
+
+"iso8859-5"
+
+"Accept : text/html, image/*"
+"Accept-Charset : iso8859-5"
+"Accept-Encoding : Doudida"
+}}}

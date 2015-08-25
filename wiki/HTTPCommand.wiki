@@ -1,0 +1,90 @@
+#labels Featured,Phase-Requirements,Done
+= Utilisation de la classe =
+
+La classe HTTPCommand permet d’accéder et de modifier les paramètres de la requête HTTP.
+
+La classe est définie dans le fichier [http://code.google.com/p/zia-epitech-2013-gavory-f/source/browse/trunk/HTTPCommand.h HTTPCommand.h]
+
+== Références ==
+  * [Transaction]
+
+
+= Contenu =
+
+== Constructor & Destructor ==
+{{{
+HTTPCommand	(void);
+HTTPCommand	(const EMethod method, const std::string url, const version version);
+~HTTPCommand	(void);
+}}}
+
+== Setters ==
+
+{{{
+void	setMethod	(const EMethod method);
+void	setUrl		(const std::string url);
+void	setVersion	(const version version);
+void	setVersion	(const int major, const int minor);
+}}}
+
+== Getters ==
+
+{{{
+const EMethod		getMethod	(void) const;
+const std::string	getURL		(void) const;
+const version		getVersion	(void) const;
+}}}
+
+
+== EMethod == 
+
+Cette énumération sert à décrire la méthode employée par le client pour la requête courante.
+{{{
+enum EMethod
+{
+	GET,
+	HEAD,
+	POST,
+	OPTIONS,
+	CONNECT,
+	TRACE,
+	PUT,
+	DELETE
+};
+}}}
+
+== Struct Version ==
+La structure version permet d'identifier la version d'HTTP utilisée par le client. Elle est séparée en deux int pour la version majeure et la mineure.
+{{{
+struct version
+{
+	version(int major = 1, int minor = 1) : major(major), minor(minor){};
+	int major;
+	int minor;
+};
+}}}
+
+
+= Exemple d'utilisation =
+
+== URL Rewriting ==
+Voici un exemple simpliste d'URL Rewriting
+{{{
+
+void rewrite(HTTPCommand c)
+{
+	c.setUrl("my_src_path/" + c.getUrl());
+}
+
+}}}
+
+== Convertisseur HTTP 1.1 en 0.9 ==
+{{{
+
+... // Conversion des headers / parametres
+
+command->setVersion(0,9);
+
+...
+
+}}}

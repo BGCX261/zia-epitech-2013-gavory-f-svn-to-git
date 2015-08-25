@@ -1,0 +1,39 @@
+#labels Featured,Phase-Requirements,Done
+= Présentation =
+Les différents code de statut sont définis dans le fichier [http://code.google.com/p/zia-epitech-2013-gavory-f/source/browse/trunk/ZIAModule.h ZiaModule.h]
+
+Le statut d'un module est spécifié par sa valeur de retour.
+
+*Le nouveau statut d'un module est la valeur de retour de la dernière méthode du module qui a été utilisée.*
+
+Ce statut est un _masque binaire_ de 10 bits codé sur un int.
+
+Les 7 bits de poids faible correspondent selon leur valeur à l'utilisation ou non d'une méthode spécifique du module.
+
+Les méthodes et les bits correspondants sont décrits dans le tableau suivant.
+
+Les 3 bits de poids fort correspondent à des indications que le module voudrait fournir au serveur (alerte, erreur, erreur fatale).
+
+Par défaut cette valeur est de 0x1111111 (ZIA_STATUT_DEFAULT). Pour la modifier, il suffit de retourner la valeur désirée dans la méthode
+loadModule.
+
+== Liste des status ==
+|| *Bit* || * Définition* || *Comportement du serveur si le bit est activé* ||
+||0x1||ZIA_ON_RECEIVE_CMD||Appel la méthode onReceiveCommand si elle est définie||
+||0x10||ZIA_ON_RECEIVE_HEAD||Appel la méthode onReceiveHead si elle est définie||
+||0x100||ZIA_ON_RECEIVE_BODY||Appel la méthode onReceiveBody si elle est définie||
+||0x1000||ZIA_MAKE_BODY||Appel la méthode makeResponseBody si elle est définie||
+||0x10000||ZIA_MAKE_HEAD|| Appel la méthode makeResponseHead si elle est définie||
+||0x100000||ZIA_BEFORE_SEND|| Appel la méthode beforeSendResponse si elle est définie||
+||0x1000000||ZIA_AFTER_SEND|| Appel la méthode afterSendResponse si elle est définie||
+||0x10000000||ZIA_WARNING|| Warning ||
+||0x100000000||ZIA_ERROR|| Error ||
+||0x1000000000||ZIA_FATAL_ERROR|| Erreur fatale et arrêt de l'utilisation du module pour la socket en cours ||
+
+
+== Utilité du statut ==
+
+Le statut a plusieurs utilités :
+  * Activer ou désactiver des déclencheurs à la demande
+  * Gérer les erreurs de module
+  * Désactiver le module

@@ -1,0 +1,174 @@
+#labels Featured,Phase-Implementation,Done
+= Introduction =
+Par le terme sérialisation nous entendons le passage de l'état *objet* à l'état *chaine de caractères* et vice-versa.<br>(ici simplement dans un `std::string`)
+
+Le protocol HTTP permet l'envoie de différentes données au format texte.
+Ainsi il nous faut donc traiter ce texte<br>ou pouvoir le générer afin de l'envoyer.
+
+Pour cela, deux méthodes sont implémentées dans les objets devant soit
+utiliser ce texte soit le générer.<br>
+Souvant de ce type:
+{{{
+std::string	serialize(void);
+void		unserialize(std::string);
+}}}
+
+*Le première `serialize(void)`:*<br>
+Permet de retourner un std::string formater avec les attributs (informations) contenu dans notre objet.
+
+*La deuxième `unserialize(std::string)`:*<br>
+En parsant(découpant) la chaine en paramètre, cette méthode _set_(initialise, sauvegarde) les informations voulues.
+
+Ces méthodes sont implémentées dans les classes suivantes:
+ * [HTTPHead]
+ * [HTTPPacket]
+
+= Préliminaires =
+== Le paquet HTTP ==
+=== Un paquet HTTP simple ===
+{{{
+HTTP/1.1 200 OK
+Date: Mon, 23 May 2005 22:38:34 GMT
+Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)
+Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT
+Etag: "3f80f-1b6-3e1cb03b"
+Accept-Ranges: bytes
+Content-Length: 438
+Connection: close
+Content-Type: text/html; charset=UTF-8
+
+Du texte du texte et encore du texte 
+afin d'avoir un peu de données
+dans notre body...
+Parce que un "body" vide je trouve ça bof.
+}}}
+Sur cette exemple nous avons donc une réponse HTTP.<br>
+Elle est composée d'un *header* et d'un *body* les deux sont séparé
+par un "\r\n".<br>
+
+=== La classe [HTTPPacket] ===
+{{{
+class HTTPPacket
+{
+public:
+	std::string	body;
+	HTTPHead	head;
+...
+}
+}}}
+Cette classe contient deux attributs (public) le *body* et le *header*.<br>
+Le *body* est tout simplement un `std::string`, c'est le corps du message.<br>
+Le *header* est un objet [HTTPHead] permettant de récupérer, de créer et d'intéragir avec les différents champs qui le compose.<br>
+par exemple:
+{{{
+head contiendra:
+	Date: Mon, 23 May 2005 22:38:34 GMT
+	Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)
+	Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT
+	...
+
+body contiendra:
+	Du texte du texte et encore du texte
+	...
+}}}
+
+== Le header ==
+=== Un header HTTP simple ===
+{{{
+Content-Encoding:x-gzip
+Content-Length: 32
+Content-Type: application/x-www-form-urlencoded
+From: frog@jmarshall.com
+User-Agent: HTTPTool/1.0/ZIA
+}}}
+Nous voyons qu'il est composé de différents champs (en-tête par ligne).<br>
+Ces champs peuvent se diviser en deux parties: *nom* et *valeur*,<br>
+qui sont séparées par le caractère "*:*".
+
+=== La classe [HTTPHead] ===
+{{{
+class HTTPHead
+{
+private:
+	std::map<std::string, std::string>	_headers;
+...
+};
+}}}
+Cette classe contient une `std::map` qui aura en premier attribut le *nom* et en deuxieme la *valeur*.<br>
+par exemple:
+{{{
+-> "Content-Encoding:x-gzip"
+-> _headers["Content-Encoding"] = "x-gzip"
+
+-> "Content-Length: 32"
+-> _headers["Content-Length:"] = "32"
+
+...
+}}}
+
+== Utilisation ==
+Maintenant que nous savons ce qui nous recevrons et ce que l'on devras renvoyer,<br> nous allons voir deux exemples simples de ce qui pourrait se passer coté serveur<br>(récupération et envoie de paquets).
+=== Récupération d'un paquet HTTP ===
+Imaginons que nous soyons déjà connecté<br> et que nous avons récupéré une `std::string` contenant tout le texte du paquet HTTP.<br>
+Reprenons celui de l'exemple dans *Un paquet HTTP simple*.
+{{{
+Date: Mon, 23 May 2005 22:38:34 GMT
+Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)
+Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT
+Etag: "3f80f-1b6-3e1cb03b"
+Accept-Ranges: bytes
+Content-Length: 438
+Connection: close
+Content-Type: text/html; charset=UTF-8
+
+Du texte du texte et encore du texte 
+afin d'avoir un peu de données
+dans notre body...
+}}}
+Nous allons appeler la méthode de l'objet [HTTPPacket]:<br>
+`void	unserialize(std::string packet);`<br>
+Cette dernière va séparer le *header* du *body*, en plaçant ce dernier dans son attribut body (`std::string body`).<br>
+Pour le *header*, il lui suffira d'appeler la méthode de son objet [HTTPHead]:<br>
+`void	unserialize(std::string header);`<br>
+Qui elle même remplira (_set_) ses attributs (`std::map`).
+
+Voilà un exemple:
+{{{
+std::string	recv = "Date: Mon, 23 May 2005 22:38:34 GMT\r\n"
+		recv += "Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)\r\n";
+		recv += "Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\r\n";
+		recv += "\r\n";
+		recv += "Du texte du texte et encore du texte\n";
+		recv += "afin d'avoir un peu de données";
+
+HTTPPacket	oPacket;
+
+oPacket.unserialize(recv); //set les attributs body & header
+}}}
+A partir d'ici, le *header* et le *body* attribut de notre objet [HTTPPacket] sont initialisés.<br>
+Ce n'est pas détaillé ici, mais la méthode `HTTPHeader::unserialize(...)` sera bien sur appelée.
+=== Génération d'un paquet HTTP ===
+Imaginons que nous soyons déjà connecté<br> et que nous avons déjà un objet [HTTPPacket] initialisé et près à nous générer un joli paquet.<br>
+{{{
+HTTPPacket	oPacket;
+
+std::cout << oPacket.header.getHeader("Date") << std::endl;
+//affiche "Mon, 23 May 2005 22:38:34 GMT"
+std::cout << oPacket.header.getHeader("Server") << std::endl;
+//affiche "Apache/1.3.3.7 (Unix) (Red-Hat/Linux)"
+std::cout << oPacket.body << std::endl;
+//affiche "Du texte du texte et encore du texte..."
+}}}
+Il nous suffira d'appeler la méthode `serialize()` afin de récupérer une chaine prête à être envoyer.
+{{{
+HTTPPacket	oPacket;
+
+std::cout << oPacket.serialize() << std::endl;
+}}}
+{{{
+//Affichera
+Date: Mon, 23 May 2005 22:38:34 GMT
+Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)
+
+Du texte du texte et encore du texte...
+}}}

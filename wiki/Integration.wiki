@@ -1,0 +1,96 @@
+#labels Featured,Phase-Requirements,Done
+= Configuration des modules =
+
+L'API est inspirée de celle d'apache.
+Nous conseillons donc d'utiliser une configuration des modules similaires à apache.
+
+{{{
+LoadModule MODULE_NAME MODULE_PATH
+}}}
+
+Exemple pour le mod _alias_ :
+{{{
+LoadModule alias_module modules/mod_alias.so
+}}}
+
+Si vous prenez le premier [Exemple_de_creation_de_module exemple de module] cela donnera, pour une librairie nommée myModuleLib.dll :
+{{{
+LoadModule myModule myModuleLib.dll
+}}}
+
+= Chargement de la librairie =
+
+Voici un exemple de chargement de dll sous windows.
+{{{
+	HMODULE hModDll;
+	if((hModDll = LoadLibrary("myModuleLib.dll")) == NULL) 
+	{
+		// Gestion d'erreur
+	}
+
+	ZIAModule *mod = (ZIAModule *)GetProcAddress(hModDll, "myModule");
+}}}
+On récupère un pointeur sur ZIAModule, il convient de tester ce pointeur avant d'accomplir une autre opération.
+
+= Chargement des données et appel des méthodes =
+
+L'appel aux méthodes devra s'effectuer dans cet ordre.
+
+Les conditions pour qu'un serveur utilise un module pour une requête donnée reste à votre discrétion.
+Le serveur ne fera appel aux méthodes qui *si elles sont définies* donc non NULL et que le *statut le permet*.
+
+* Attention: * Les méthodes _loadModule_ et _unloadModule_ seront appelées sans regarder le code de statut. Sauf s'il s'agit d'un erreur fatale.
+
+|| *Action du serveur* || *Nom de la méthode appelée* ||
+|| Ouverture d'une nouvelle socket client || ||
+|| || [ZIAModule]::loadModule ||
+|| Réception d'une commande || ||
+|| Creation d'une [Transaction] contenant uniquement la commande. || ||
+|| || [ZIAModule]::onReceiveCommand ||
+|| Réception du head de la requête || ||
+|| Remplissage du head de la _[Transaction]::request_ || ||
+|| || [ZIAModule]::onReceiveHead ||
+|| Réception du body de la requête || ||
+|| Remplissage du body de la _[Transaction]::request_ || ||
+|| || [ZIAModule]::onReceiveBody ||
+|| Accès a la ressource concernée par la requête || ||
+|| Remplissage du body et head de _[Transaction]::response_ || ||
+|| || [ZIAModule]::makeResponseBody ||
+|| || [ZIAModule]::makeResponseHead ||
+|| || [ZIAModule]::beforeSendResponse ||
+|| Envoie des données au client || ||
+|| || [ZIAModule]::afterSendResponse ||
+|| .... || .... ||
+|| Fermeture de la socket || ||
+|| || [ZIAModule]::unloadModule ||
+
+= Statut =
+
+Voir la page [Code_de_statuts].
+
+Il vous sera nécessaire de gérer les statuts de chaque module séparément.
+En effet, chaque appel à une méthode de module doit retourner un valeur qui constituera le nouveau [Code_de_statuts statut] du module.
+
+== Utilisation du code de statut ==
+Il convient avant chaque appel à une méthode d'un module, de vérifier le code de statut de celui-ci.
+Si le bit correspondant à la méthode demandée est à 1, il est possible d'appeler la méthode. Sinon on ne fera pas appel à cette méthode.
+
+Il est évident que lors de l'appel à cette méthode, le code de retour doit être récupéré et analysé pour vérifier les erreurs.
+
+== Comportement des erreurs ==
+Vous pouvez gérer les ZIA_WARNING et ZIA_ERROR comme vous le voulez. Cela peut servir à loguer les erreurs de module.
+
+Par contre les ZIA_FATAL_ERROR signifie immanquablement une erreur grave dans l’exécution du module, si cela se produit le module ne doit plus être utilisé pour la connexion en cours.
+
+
+= Example d'utilisation =
+== Appel à la méthode makeResponseBody ==
+{{{
+
+// Remplissage de [Transaction]::response
+if (myModuleStatusCode & ZIA_MAKE_BODY // On verifie le code de statut
+	&& myModule->makeResponseBody != NULL) // On verifie que la méthode est définie
+	myModuleStatusCode = myModule->makeResponseBody(myModuleStatusCode, myTransaction, 0); // On appelle la méthode en récupérant le nouveau code de statut.
+
+
+}}}

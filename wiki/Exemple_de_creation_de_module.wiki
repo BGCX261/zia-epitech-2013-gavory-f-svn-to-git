@@ -1,0 +1,32 @@
+#labels Featured,Phase-Requirements,ToComplete
+Pour savoir quelles informations sont à transmettre au module et comment l'appeler, consultez la page [Integration].
+
+== Création d'un module simple ==
+
+Ce module va simplement modifier la réponse envoyée au client par la chaîne "Manipulated Body".
+Il effectuera cette opération au moment où il lui sera demandé de construire la réponse du serveur.
+
+{{{
+#include <ZIAModule.h>
+
+ZIA_FCT(myReceiveBodyFunc)
+{
+	transaction.response.body = "Manipulated Body";
+	return ZIA_RECEIVE_BODY;
+}
+
+extern "C" __declspec(dllexport) ZIAApi::ZIAModule myModule = {
+	0, // loadModule
+	0, // onReceiveCommand
+	0, // onReceiveHead
+	0, // onReceiveBody
+	myReceiveBodyFunc, // makeResponseBody
+	0, // makeResponseHead
+	0, // beforeSendResponse
+	0, // afterSendResponse
+	0  // unloadModule
+};
+}}}
+
+Vous avez créé votre premier module !
+Son utilité est limitée mais peut vous permettre de tester votre serveur.
